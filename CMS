@@ -1,0 +1,96 @@
+import json
+
+class Complaint:
+    def __init__(self, complaint_id, description, status='Open'):
+        self.complaint_id = complaint_id
+        self.description = description
+        self.status = status
+
+    def to_dict(self):
+        return {
+            'complaint_id': self.complaint_id,
+            'description': self.description,
+            'status': self.status
+        }
+
+    @staticmethod
+    def from_dict(data):
+        return Complaint(
+            complaint_id=data['complaint_id'],
+            description=data['description'],
+            status=data['status']
+        )
+
+class ComplaintManagementSystem:
+    def __init__(self, file_name='complaints.json'):
+        self.file_name = file_name
+        self.complaints = self.load_complaints()
+
+    def save_complaints(self):
+        with open(self.file_name, 'w') as f:
+            json.dump([comp.to_dict() for comp in self.complaints], f)
+
+    def load_complaints(self):
+        try:
+            with open(self.file_name, 'r') as f:
+                return [Complaint.from_dict(data) for data in json.load(f)]
+        except FileNotFoundError:
+            return []
+
+    def create_complaint(self, description):
+        complaint_id = len(self.complaints) + 1
+        complaint = Complaint(complaint_id, description)
+        self.complaints.append(complaint)
+        self.save_complaints()
+        print(f'Complaint ID {complaint_id} added.')
+
+    def view_complaints(self):
+        for complaint in self.complaints:
+            print(f'ID: {complaint.complaint_id}, Description: {complaint.description}, Status: {complaint.status}')
+
+    def update_complaint(self, complaint_id, status):
+        for complaint in self.complaints:
+            if complaint.complaint_id == complaint_id:
+                complaint.status = status
+                self.save_complaints()
+                print(f'Complaint ID {complaint_id} updated to status "{status}".')
+                return
+        print('Complaint not found.')
+
+    def delete_complaint(self, complaint_id):
+        self.complaints = [comp for comp in self.complaints if comp.complaint_id != complaint_id]
+        self.save_complaints()
+        print(f'Complaint ID {complaint_id} deleted.')
+
+def main():
+    system = ComplaintManagementSystem()
+
+    while True:
+        print("\nComplaint Management System")
+        print("1. Add Complaint")
+        print("2. View Complaints")
+        print("3. Update Complaint Status")
+        print("4. Delete Complaint")
+        print("5. Exit")
+
+        choice = input("Enter your choice: ")
+
+        if choice == '1':
+            description = input("Enter complaint description: ")
+            system.create_complaint(description)
+        elif choice == '2':
+            system.view_complaints()
+        elif choice == '3':
+            complaint_id = int(input("Enter complaint ID to update: "))
+            status = input("Enter new status: ")
+            system.update_complaint(complaint_id, status)
+        elif choice == '4':
+            complaint_id = int(input("Enter complaint ID to delete: "))
+            system.delete_complaint(complaint_id)
+        elif choice == '5':
+            break
+        else:
+            print("Invalid choice. Please try again.")
+
+if __name__ == "__main__":
+    main()
